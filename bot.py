@@ -880,8 +880,6 @@ class Clayton:
                         )
                         break
 
-                    break
-
                 if ticket == 0:
                     self.log(
                         f"{Fore.MAGENTA + Style.BRIGHT}[ Play Game{Style.RESET_ALL}"
