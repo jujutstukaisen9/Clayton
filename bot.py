@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
 import json
+import re
 import os
 import random
 from colorama import *
@@ -24,6 +25,8 @@ class Clayton:
             'Sec-Fetch-Site': 'same-origin',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0'
         }
+        self.base_url = "https://tonclayton.fun"
+        self.api_base_id = None
 
     def clear_terminal(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -50,8 +53,42 @@ class Clayton:
         minutes, seconds = divmod(remainder, 60)
         return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
     
+    async def find_latest_js_file(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.base_url) as response:
+                response.raise_for_status()
+                html = await response.text()
+                match = re.search(r'\/assets\/index-[^"]+\.js', html)
+                return match.group(0).split('/')[-1] if match else None
+
+    async def fetch_api_base_id(self, retries=5, delay=3):
+        for attempt in range(retries):
+            js_file = await self.find_latest_js_file()
+            if js_file:
+                try:
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(f"{self.base_url}/assets/{js_file}") as response:
+                            response.raise_for_status()
+                            js_content = await response.text()
+                            match = re.search(r'_ge="([^"]+)"', js_content)
+                            if match:
+                                self.api_base_id = match.group(1)
+                                return
+                            else:
+                                return None
+                except (aiohttp.ClientError, aiohttp.ContentTypeError, json.JSONDecodeError) as e:
+                    if attempt < retries - 1:
+                        await asyncio.sleep(delay)
+                    else:
+                        return None
+            else:
+                if attempt < retries - 1:
+                    await asyncio.sleep(delay)
+                else:
+                    return None
+    
     async def user_authorization(self, query: str, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/user/authorization'
+        url = f'{self.base_url}/api/{self.api_base_id}/user/authorization'
         headers = {
             **self.headers,
             'Content-Length': '0',
@@ -82,7 +119,7 @@ class Clayton:
                     return None
                 
     async def daily_claim(self, query: str, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/user/daily-claim'
+        url = f'{self.base_url}/api/{self.api_base_id}/user/daily-claim'
         headers = {
             **self.headers,
             'Content-Length': '0',
@@ -113,7 +150,7 @@ class Clayton:
                     return None
     
     async def all_tasks(self, query: str, type: str, retries=5):
-        url = f'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/tasks/{type}'
+        url = f'{self.base_url}/api/{self.api_base_id}/tasks/{type}'
         headers = {
             **self.headers,
             'Init-Data': query,
@@ -143,7 +180,7 @@ class Clayton:
                     return None
         
     async def start_tasks(self, query: str, task_id: int, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/tasks/complete'
+        url = f'{self.base_url}/api/{self.api_base_id}/tasks/complete'
         data = json.dumps({'task_id': task_id})
         headers = {
             **self.headers,
@@ -174,7 +211,7 @@ class Clayton:
                     return None
         
     async def claim_tasks(self, query: str, task_id: int, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/tasks/claim'
+        url = f'{self.base_url}/api/{self.api_base_id}/tasks/claim'
         data = json.dumps({'task_id': task_id})
         headers = {
             **self.headers,
@@ -205,7 +242,7 @@ class Clayton:
                     return None
         
     async def check_tasks(self, query: str, task_id: int, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/tasks/check'
+        url = f'{self.base_url}/api/{self.api_base_id}/tasks/check'
         data = json.dumps({'task_id': task_id})
         headers = {
             **self.headers,
@@ -236,7 +273,7 @@ class Clayton:
                     return None
         
     async def user_achievements(self, query: str, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/user/achievements/get'
+        url = f'{self.base_url}/api/{self.api_base_id}/user/achievements/get'
         headers = {
             **self.headers,
             'Init-Data': query,
@@ -266,7 +303,7 @@ class Clayton:
                     return None
         
     async def claim_achievements(self, query: str, type: str, level: int, retries=5):
-        url = f'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/user/achievements/claim/{type}/{level}'
+        url = f'{self.base_url}/api/{self.api_base_id}/user/achievements/claim/{type}/{level}'
         headers = {
             **self.headers,
             'Init-Data': query,
@@ -296,7 +333,7 @@ class Clayton:
                     return None
 
     async def start_game1024(self, query: str, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/game/start'
+        url = f'{self.base_url}/api/{self.api_base_id}/game/start'
         headers = {
             **self.headers,
             'Init-Data': query,
@@ -326,7 +363,7 @@ class Clayton:
                     return None
 
     async def save_tile(self, query: str, session_id: str, tile: int, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/game/save-tile'
+        url = f'{self.base_url}/api/{self.api_base_id}/game/save-tile'
         data = json.dumps({'session_id':session_id, 'maxTile':tile})
         headers = {
             **self.headers,
@@ -357,7 +394,7 @@ class Clayton:
                     return None
 
     async def over_tile(self, query: str, session_id: str, tile: int, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/game/over'
+        url = f'{self.base_url}/api/{self.api_base_id}/game/over'
         data = json.dumps({'session_id':session_id, 'multiplier':1, 'maxTile':tile})
         headers = {
             **self.headers,
@@ -388,7 +425,7 @@ class Clayton:
                     return None
                 
     async def start_clayball(self, query: str, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/clay/start-game'
+        url = f'{self.base_url}/api/{self.api_base_id}/clay/start-game'
         data = {}
         headers = {
             **self.headers,
@@ -419,7 +456,7 @@ class Clayton:
                     return None
                 
     async def end_clayball(self, query: str, score: int, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/clay/end-game'
+        url = f'{self.base_url}/api/{self.api_base_id}/clay/end-game'
         data = json.dumps({'score':score})
         headers = {
             **self.headers,
@@ -450,7 +487,7 @@ class Clayton:
                     return None
                 
     async def start_gamestack(self, query: str, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/stack/st-game'
+        url = f'{self.base_url}/api/{self.api_base_id}/stack/st-game'
         headers = {
             **self.headers,
             'Init-Data': query,
@@ -480,7 +517,7 @@ class Clayton:
                     return None
 
     async def upadate_stack(self, query: str, score: int, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/stack/update-game'
+        url = f'{self.base_url}/api/{self.api_base_id}/stack/update-game'
         data = json.dumps({'score':score})
         headers = {
             **self.headers,
@@ -511,7 +548,7 @@ class Clayton:
                     return None
 
     async def end_stack(self, query: str, score: int, retries=5):
-        url = 'https://tonclayton.fun/api/cc82f330-6a6d-4deb-a15b-6a335a67ffa7/stack/en-game'
+        url = f'{self.base_url}/api/{self.api_base_id}/stack/en-game'
         data = json.dumps({'score':score, 'multiplier':1})
         headers = {
             **self.headers,
@@ -895,6 +932,8 @@ class Clayton:
 
     async def main(self):
         try:
+            await self.fetch_api_base_id()
+
             with open('query.txt', 'r') as file:
                 queries = [line.strip() for line in file if line.strip()]
 
