@@ -997,12 +997,11 @@ class Clayton:
 
     async def main(self):
         try:
-            await self.fetch_api_base_id()
-
             with open('query.txt', 'r') as file:
                 queries = [line.strip() for line in file if line.strip()]
 
             while True:
+                await self.fetch_api_base_id()
                 self.clear_terminal()
                 self.welcome()
                 self.log(
