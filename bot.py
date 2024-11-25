@@ -117,6 +117,37 @@ class Clayton:
                     await asyncio.sleep(3)
                 else:
                     return None
+    
+    async def save_user(self, query: str, retries=5):
+        url = f'{self.base_url}/api/{self.api_base_id}/user/save-user'
+        headers = {
+            **self.headers,
+            'Content-Length': '0',
+            'Init-Data': query,
+            'Content-Type': 'application/json'
+        }
+
+        for attempt in range(retries):
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, headers=headers) as response:
+                        response.raise_for_status()
+                        if response.status == 200:
+                            return await response.json()
+                        else:
+                            return None
+            except (aiohttp.ClientError, aiohttp.ContentTypeError) as e:
+                if attempt < retries - 1:
+                    print(
+                        f"{Fore.RED + Style.BRIGHT}HTTP ERROR{Style.RESET_ALL}"
+                        f"{Fore.YELLOW + Style.BRIGHT} Retrying... {Style.RESET_ALL}"
+                        f"{Fore.WHITE + Style.BRIGHT}[{attempt+1}/{retries}]{Style.RESET_ALL}",
+                        end="\r",
+                        flush=True
+                    )
+                    await asyncio.sleep(3)
+                else:
+                    return None
                 
     async def daily_claim(self, query: str, retries=5):
         url = f'{self.base_url}/api/{self.api_base_id}/user/daily-claim'
@@ -592,6 +623,7 @@ class Clayton:
             return
         
         if user:
+            save = await self.save_user(query)
             self.log(
                 f"{Fore.MAGENTA + Style.BRIGHT}[ Account{Style.RESET_ALL}"
                 f"{Fore.WHITE + Style.BRIGHT} {user['user']['first_name']} {Style.RESET_ALL}"
