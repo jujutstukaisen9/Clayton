@@ -623,7 +623,7 @@ class Clayton:
             return
         
         if user:
-            save = await self.save_user(query)
+            await self.save_user(query)
             self.log(
                 f"{Fore.MAGENTA + Style.BRIGHT}[ Account{Style.RESET_ALL}"
                 f"{Fore.WHITE + Style.BRIGHT} {user['user']['first_name']} {Style.RESET_ALL}"
