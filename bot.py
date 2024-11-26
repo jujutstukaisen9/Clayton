@@ -456,7 +456,7 @@ class Clayton:
                     return None
                 
     async def start_clayball(self, query: str, retries=5):
-        url = f'{self.base_url}/api/{self.api_base_id}/clay/start-game'
+        url = f'{self.base_url}/api/clay/start-game'
         data = {}
         headers = {
             **self.headers,
@@ -468,7 +468,6 @@ class Clayton:
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.post(url, headers=headers, json=data) as response:
-                        print(await response.json())
                         response.raise_for_status()
                         if response.status == 200:
                             return await response.json()
@@ -488,7 +487,7 @@ class Clayton:
                     return None
                 
     async def end_clayball(self, query: str, score: int, retries=5):
-        url = f'{self.base_url}/api/{self.api_base_id}/clay/end-game'
+        url = f'{self.base_url}/api/clay/end-game'
         data = json.dumps({'score':score})
         headers = {
             **self.headers,
@@ -842,6 +841,7 @@ class Clayton:
             if ticket > 0:
                 start = await self.start_game1024(query)
                 if start and start['message'] == 'Game started successfully':
+                    ticket -= 1
                     session_id = start['session_id']
                     tile = 2
                     self.log(
@@ -904,9 +904,58 @@ class Clayton:
                     )
                 await asyncio.sleep(2)
 
+                start = await self.start_clayball(query)
+                if start and start['session_id']:
+                    ticket = start['attempts']
+                    self.log(
+                        f"{Fore.MAGENTA + Style.BRIGHT}[ Game Clayball{Style.RESET_ALL}"
+                        f"{Fore.GREEN + Style.BRIGHT} Is Started {Style.RESET_ALL}"
+                        f"{Fore.MAGENTA + Style.BRIGHT}] [ ID{Style.RESET_ALL}"
+                        f"{Fore.WHITE + Style.BRIGHT} {start['session_id']} {Style.RESET_ALL}"
+                        f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
+                    )
+
+                    for remaining in range(150, 0, -1):
+                        print(
+                            f"{Fore.CYAN + Style.BRIGHT}[ {datetime.now().astimezone(wib).strftime('%x %X %Z')} ]{Style.RESET_ALL}"
+                            f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+                            f"{Fore.MAGENTA + Style.BRIGHT}[ Wait for{Style.RESET_ALL}"
+                            f"{Fore.YELLOW + Style.BRIGHT} {remaining} {Style.RESET_ALL}"
+                            f"{Fore.WHITE + Style.BRIGHT}Seconds to Complete Game{Style.RESET_ALL}"
+                            f"{Fore.MAGENTA + Style.BRIGHT} ]{Style.RESET_ALL}   ",
+                            end="\r",
+                            flush=True
+                        )
+                        await asyncio.sleep(1)
+
+                    score = 300
+                    end = await self.end_clayball(query, score)
+                    if end:
+                        self.log(
+                            f"{Fore.MAGENTA + Style.BRIGHT}[ Game Clayball{Style.RESET_ALL}"
+                            f"{Fore.GREEN + Style.BRIGHT} Is Completed {Style.RESET_ALL}"
+                            f"{Fore.MAGENTA + Style.BRIGHT}] [ Reward{Style.RESET_ALL}"
+                            f"{Fore.WHITE + Style.BRIGHT} {end['reward']} $CLAY {Style.RESET_ALL}"
+                            f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
+                        )
+                    else:
+                        self.log(
+                            f"{Fore.MAGENTA + Style.BRIGHT}[ Game Clayball{Style.RESET_ALL}"
+                            f"{Fore.RED + Style.BRIGHT} Isn't Completed {Style.RESET_ALL}"
+                            f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}              "
+                        )
+                else:
+                    self.log(
+                        f"{Fore.MAGENTA + Style.BRIGHT}[ Game Clayball{Style.RESET_ALL}"
+                        f"{Fore.RED + Style.BRIGHT} Isn't Started {Style.RESET_ALL}"
+                        f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
+                    )
+                await asyncio.sleep(2)
+
                 while ticket > 0:
                     game_stack = await self.start_gamestack(query)
                     if game_stack and game_stack['session_id']:
+                        ticket -= 1
                         self.log(
                             f"{Fore.MAGENTA + Style.BRIGHT}[ Game Stack{Style.RESET_ALL}"
                             f"{Fore.GREEN + Style.BRIGHT} Is Started {Style.RESET_ALL}"
@@ -940,7 +989,6 @@ class Clayton:
                         if score == 100:
                             end = await self.end_stack(query, score)
                             if end:
-                                ticket -= 1
                                 self.log(
                                     f"{Fore.MAGENTA + Style.BRIGHT}[ Game Stack{Style.RESET_ALL}"
                                     f"{Fore.GREEN + Style.BRIGHT} Is Completed {Style.RESET_ALL}"
@@ -965,54 +1013,6 @@ class Clayton:
                         break
 
                     await asyncio.sleep(2)
-
-                    # start = await self.start_clayball(query)
-                    # if start and start['session_id']:
-                    #     ticket = start['attempts']
-                    #     self.log(
-                    #         f"{Fore.MAGENTA + Style.BRIGHT}[ Game Clayball{Style.RESET_ALL}"
-                    #         f"{Fore.GREEN + Style.BRIGHT} Is Started {Style.RESET_ALL}"
-                    #         f"{Fore.MAGENTA + Style.BRIGHT}] [ ID{Style.RESET_ALL}"
-                    #         f"{Fore.WHITE + Style.BRIGHT} {start['session_id']} {Style.RESET_ALL}"
-                    #         f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
-                    #     )
-
-                    #     for remaining in range(150, 0, -1):
-                    #         print(
-                    #             f"{Fore.CYAN + Style.BRIGHT}[ {datetime.now().astimezone(wib).strftime('%x %X %Z')} ]{Style.RESET_ALL}"
-                    #             f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-                    #             f"{Fore.MAGENTA + Style.BRIGHT}[ Wait for{Style.RESET_ALL}"
-                    #             f"{Fore.YELLOW + Style.BRIGHT} {remaining} {Style.RESET_ALL}"
-                    #             f"{Fore.WHITE + Style.BRIGHT}Seconds to Complete Game{Style.RESET_ALL}"
-                    #             f"{Fore.MAGENTA + Style.BRIGHT} ]{Style.RESET_ALL}   ",
-                    #             end="\r",
-                    #             flush=True
-                    #         )
-                    #         await asyncio.sleep(1)
-
-                    #     score = 1000
-                    #     end = await self.end_clayball(query, score)
-                    #     if end:
-                    #         self.log(
-                    #             f"{Fore.MAGENTA + Style.BRIGHT}[ Game Clayball{Style.RESET_ALL}"
-                    #             f"{Fore.GREEN + Style.BRIGHT} Is Completed {Style.RESET_ALL}"
-                    #             f"{Fore.MAGENTA + Style.BRIGHT}] [ Reward{Style.RESET_ALL}"
-                    #             f"{Fore.WHITE + Style.BRIGHT} {end['reward']} $CLAY {Style.RESET_ALL}"
-                    #             f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
-                    #         )
-                    #     else:
-                    #         self.log(
-                    #             f"{Fore.MAGENTA + Style.BRIGHT}[ Game Clayball{Style.RESET_ALL}"
-                    #             f"{Fore.RED + Style.BRIGHT} Isn't Completed {Style.RESET_ALL}"
-                    #             f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}              "
-                    #         )
-                    # else:
-                    #     self.log(
-                    #         f"{Fore.MAGENTA + Style.BRIGHT}[ Game Stack{Style.RESET_ALL}"
-                    #         f"{Fore.RED + Style.BRIGHT} Isn't Started {Style.RESET_ALL}"
-                    #         f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
-                    #     )
-                    #     break
 
                 if ticket == 0:
                     self.log(

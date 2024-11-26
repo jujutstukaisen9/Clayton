@@ -10,8 +10,8 @@ Register Here : [Clayton](https://t.me/claytoncoinbot/game?startapp=1493482017)
   - Auto Completed Tasks
   - Auto Claim User Achievements
   - Auto Play 1024 Game
+  - Auto Play Clayball Game
   - Auto Play Stack Game
-  - Auto Play Clayball Game `[Deleted]`
   - Multi Account
 
 ## Prasyarat
