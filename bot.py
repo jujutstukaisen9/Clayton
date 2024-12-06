@@ -70,7 +70,7 @@ class Clayton:
                         async with session.get(f"{self.base_url}/assets/{js_file}") as response:
                             response.raise_for_status()
                             js_content = await response.text()
-                            match = re.search(r'ge="([^"]+)"', js_content)
+                            match = re.search(r'xCe="([^"]+)"', js_content)
                             if match:
                                 self.api_base_id = match.group(1)
                                 return
