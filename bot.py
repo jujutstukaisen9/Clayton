@@ -334,6 +334,60 @@ class Clayton:
                 else:
                     return None
 
+    async def claywheel_info(self, query: str, retries=5):
+        url = f'{self.base_url}/api/{self.api_base_id}/spin/info'
+        headers = {
+            **self.headers,
+            'Init-Data': query,
+            'Content-Type': 'application/json'
+        }
+        for attempt in range(retries):
+            try:
+                async with ClientSession(timeout=ClientTimeout(total=20)) as session:
+                    async with session.get(url=url, headers=headers) as response:
+                        response.raise_for_status()
+                        return await response.json()
+            except (Exception, ClientResponseError) as e:
+                if attempt < retries - 1:
+                    print(
+                        f"{Fore.RED + Style.BRIGHT}ERROR.{Style.RESET_ALL}"
+                        f"{Fore.YELLOW + Style.BRIGHT} Retrying.... {Style.RESET_ALL}"
+                        f"{Fore.WHITE + Style.BRIGHT}[{attempt+1}/{retries}]{Style.RESET_ALL}",
+                        end="\r",
+                        flush=True
+                    )
+                    await asyncio.sleep(3)
+                else:
+                    return None
+
+    async def perform_claywheel(self, query: str, retries=5):
+        url = f'{self.base_url}/api/{self.api_base_id}/spin/perform'
+        data = json.dumps({'multiplier':3})
+        headers = {
+            **self.headers,
+            'Content-Length': str(len(data)),
+            'Init-Data': query,
+            'Content-Type': 'application/json'
+        }
+        for attempt in range(retries):
+            try:
+                async with ClientSession(timeout=ClientTimeout(total=20)) as session:
+                    async with session.post(url=url, headers=headers, data=data) as response:
+                        response.raise_for_status()
+                        return await response.json()
+            except (Exception, ClientResponseError) as e:
+                if attempt < retries - 1:
+                    print(
+                        f"{Fore.RED + Style.BRIGHT}ERROR.{Style.RESET_ALL}"
+                        f"{Fore.YELLOW + Style.BRIGHT} Retrying.... {Style.RESET_ALL}"
+                        f"{Fore.WHITE + Style.BRIGHT}[{attempt+1}/{retries}]{Style.RESET_ALL}",
+                        end="\r",
+                        flush=True
+                    )
+                    await asyncio.sleep(3)
+                else:
+                    return None
+                
     async def start_game1024(self, query: str, retries=5):
         url = f'{self.base_url}/api/{self.api_base_id}/game/start'
         headers = {
@@ -810,6 +864,60 @@ class Clayton:
                     f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
                 )
                 await asyncio.sleep(1)
+
+                if ticket >= 2:
+                    claywheel = await self.claywheel_info(query)
+                    if claywheel:
+                        free_spin = claywheel['free_spins']
+                        if free_spin and free_spin > 0:
+                            perform = await self.perform_claywheel(query)
+                            if perform:
+                                ticket -= 2
+                                self.log(
+                                    f"{Fore.MAGENTA + Style.BRIGHT}[ Game Claywheel{Style.RESET_ALL}"
+                                    f"{Fore.GREEN + Style.BRIGHT} Is Started {Style.RESET_ALL}"
+                                    f"{Fore.MAGENTA + Style.BRIGHT}] [ Reward{Style.RESET_ALL}"
+                                    f"{Fore.WHITE + Style.BRIGHT} {perform['win']} $CLAY {Style.RESET_ALL}"
+                                    f"{Fore.MAGENTA + Style.BRIGHT}] [ Ticket{Style.RESET_ALL}"
+                                    f"{Fore.WHITE + Style.BRIGHT} {ticket} Left {Style.RESET_ALL}"
+                                    f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
+                                )
+                            else:
+                                self.log(
+                                    f"{Fore.MAGENTA + Style.BRIGHT}[ Game Claywheel{Style.RESET_ALL}"
+                                    f"{Fore.RED + Style.BRIGHT} Isn't Started {Style.RESET_ALL}"
+                                    f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
+                                )
+                            await asyncio.sleep(3)
+                            
+                        else:
+                            self.log(
+                                f"{Fore.MAGENTA + Style.BRIGHT}[ Game Claywheel{Style.RESET_ALL}"
+                                f"{Fore.YELLOW + Style.BRIGHT} No Available Attempts {Style.RESET_ALL}"
+                                f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
+                            )
+                    else:
+                        self.log(
+                            f"{Fore.MAGENTA + Style.BRIGHT}[ Game Claywheel{Style.RESET_ALL}"
+                            f"{Fore.RED + Style.BRIGHT} Data Is None {Style.RESET_ALL}"
+                            f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
+                        )
+                else:
+                    self.log(
+                        f"{Fore.MAGENTA + Style.BRIGHT}[ Game Claywheel{Style.RESET_ALL}"
+                        f"{Fore.YELLOW + Style.BRIGHT} Isn't Started {Style.RESET_ALL}"
+                        f"{Fore.MAGENTA + Style.BRIGHT}] [ Reason{Style.RESET_ALL}"
+                        f"{Fore.WHITE + Style.BRIGHT} Tickets Not Enough {Style.RESET_ALL}"
+                        f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
+                    )
+
+                if ticket <= 0:
+                    self.log(
+                        f"{Fore.MAGENTA + Style.BRIGHT}[ Play Game{Style.RESET_ALL}"
+                        f"{Fore.YELLOW + Style.BRIGHT} No Ticket Remaining {Style.RESET_ALL}"
+                        f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
+                    )
+                    return
 
                 start = await self.start_game1024(query)
                 if start and start['message'] == 'Game started successfully':
