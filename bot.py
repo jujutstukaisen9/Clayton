@@ -53,13 +53,20 @@ class Clayton:
         minutes, seconds = divmod(remainder, 60)
         return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
     
-    async def find_latest_js_file(self):
-        async with ClientSession(timeout=ClientTimeout(total=20)) as session:
-            async with session.get(self.base_url) as response:
-                response.raise_for_status()
-                html = await response.text()
-                match = re.search(r'\/assets\/index-[^"]+\.js', html)
-                return match.group(0).split('/')[-1] if match else None
+    async def find_latest_js_file(self, retries=5, delay=3):
+        for attempt in range(retries):
+            try:
+                async with ClientSession(timeout=ClientTimeout(total=20)) as session:
+                    async with session.get(self.base_url) as response:
+                        response.raise_for_status()
+                        html = await response.text()
+                        match = re.search(r'\/assets\/index-[^"]+\.js', html)
+                        return match.group(0).split('/')[-1] if match else None
+            except (Exception, ClientResponseError) as e:
+                    if attempt < retries - 1:
+                        await asyncio.sleep(delay)
+                    else:
+                        return None
 
     async def fetch_api_base_id(self, retries=5, delay=3):
         for attempt in range(retries):
@@ -80,9 +87,7 @@ class Clayton:
                     if attempt < retries - 1:
                         await asyncio.sleep(delay)
             else:
-                if attempt < retries - 1:
-                    await asyncio.sleep(delay)
-        return None
+                return None
     
     async def user_authorization(self, query: str, retries=5):
         url = f'{self.base_url}/api/{self.api_base_id}/user/authorization'
@@ -1154,7 +1159,7 @@ class Clayton:
                 print(f"{Fore.YELLOW + Style.BRIGHT}Looking For API Base ID...{Style.RESET_ALL}")
 
                 self.api_base_id = await self.fetch_api_base_id()
-                if not self.api_base_id:
+                if self.api_base_id is None:
                     self.log(
                         f"{Fore.RED + Style.BRIGHT}API Base ID Not Found. {Style.RESET_ALL}"
                         f"{Fore.WHITE + Style.BRIGHT}Clayton Server May Down{Style.RESET_ALL}"
