@@ -1043,12 +1043,16 @@ class Clayton:
                                 f"{Fore.RED + Style.BRIGHT}Isn't Completed{Style.RESET_ALL}"
                                 f"{Fore.MAGENTA + Style.BRIGHT} ]{Style.RESET_ALL}              "
                             )
+                            break
+
                     else:
                         self.log(
                             f"{Fore.MAGENTA + Style.BRIGHT}[ Game Clayball{Style.RESET_ALL}"
                             f"{Fore.RED + Style.BRIGHT} Isn't Started {Style.RESET_ALL}"
                             f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
                         )
+                        break
+
                     await asyncio.sleep(3)
 
                     if ticket <= 0:
@@ -1089,6 +1093,8 @@ class Clayton:
                                     f"{Fore.RED + Style.BRIGHT}Isn't Success to Update{Style.RESET_ALL}"
                                     f"{Fore.MAGENTA + Style.BRIGHT} ]{Style.RESET_ALL}"
                                 )
+                                break
+
                             await asyncio.sleep(1)
 
                             score += 10
@@ -1113,6 +1119,7 @@ class Clayton:
                                     f"{Fore.RED + Style.BRIGHT}Isn't Completed{Style.RESET_ALL}"
                                     f"{Fore.MAGENTA + Style.BRIGHT} ]{Style.RESET_ALL}"
                                 )
+                                break
 
                     else:
                         self.log(
@@ -1120,6 +1127,8 @@ class Clayton:
                             f"{Fore.RED + Style.BRIGHT} Isn't Started {Style.RESET_ALL}"
                             f"{Fore.MAGENTA + Style.BRIGHT}]{Style.RESET_ALL}"
                         )
+                        break
+                    
                     await asyncio.sleep(3)
 
                 if ticket == 0:
