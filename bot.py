@@ -19,7 +19,7 @@ class Clayton:
             'Host': 'tonclayton.fun',
             'Origin': 'https://tonclayton.fun',
             'Pragma': 'no-cache',
-            'Referer': 'https://tonclayton.fun/?tgWebAppStartParam=1493482017',
+            'Referer': 'https://tonclayton.fun/?tgWebAppStartParam=7143283584',
             'Sec-Fetch-Dest': 'empty',
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin',

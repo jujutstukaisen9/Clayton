@@ -1,7 +1,7 @@
 # Clayton BOT
 Clayton BOT
 
-Register Here : [Clayton](https://t.me/claytoncoinbot/game?startapp=1493482017)
+Register Here : [Clayton](https://t.me/claytoncoinbot/game?startapp=7143283584)
 
 ## Fitur
 
